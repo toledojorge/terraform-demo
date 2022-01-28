@@ -1,3 +1,8 @@
+variable "webserver_ami" {
+    type = string
+    default = "ami-0ab3b071083dddbb8"
+}
+
 provider "aws" {
     region = "us-east-1"
 }
@@ -80,7 +85,7 @@ resource "aws_elb" "prod_web" {
 # Template para re usar creacion instancias EC2
 resource "aws_launch_template" "prod_web" {
     name_prefix = "prod-web"
-    image_id = "ami-0ab3b071083dddbb8"
+    image_id = var.webserver_ami
     instance_type = "t2.micro"
     tags = {
         "Terraform" : "true"
