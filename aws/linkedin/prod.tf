@@ -2,15 +2,18 @@ provider "aws" {
     region = "us-east-1"
 }
 
+# Bucket S3 sin usar
 resource "aws_s3_bucket" "prod_tf_course" {
     bucket = "tf-course-20220127"
     acl = "private"
 }
 
+# Default VPC
 resource "aws_default_vpc" "default" {
 
 }
 
+# Subnet en zona disponibilidad 1
 resource "aws_default_subnet" "default_az1" {
     availability_zone = "us-east-1a"
     tags = {
@@ -18,6 +21,7 @@ resource "aws_default_subnet" "default_az1" {
     }
 }
 
+# Subnet en zona disponibilidad 2
 resource "aws_default_subnet" "default_az2" {
     availability_zone = "us-east-1b"
     tags = {
@@ -25,6 +29,7 @@ resource "aws_default_subnet" "default_az2" {
     }
 }
 
+# Configuracion reglas de security group
 resource "aws_security_group" "prod_web" {
     name = "prod_web"
     description = "Allow standard http and https ports inbound and everything outbound"
@@ -55,34 +60,10 @@ resource "aws_security_group" "prod_web" {
     }
 }
 
-resource "aws_instance" "prod_web" {
-    count = 2
-    ami = "ami-0ab3b071083dddbb8"
-    instance_type = "t2.micro"
 
-    vpc_security_group_ids = [
-        aws_security_group.prod_web.id
-    ]
-
-    tags = {
-        "Terraform" : "true"
-    }
-}
-
-resource "aws_eip_association" "prod_web" {
-    instance_id = aws_instance.prod_web.0.id
-    allocation_id = aws_eip.prod_web.id
-}
-
-resource "aws_eip" "prod_web" {
-    tags = {
-        "Terraform" : "true"
-    }
-}
-
+# Balanceador de carga
 resource "aws_elb" "prod_web" {
-    name = "prod-web"
-    instances = aws_instance.prod_web.*.id
+    name = "prod-web"    
     subnets = [aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id]
     security_groups = [aws_security_group.prod_web.id]
     listener {
@@ -94,4 +75,39 @@ resource "aws_elb" "prod_web" {
     tags = {
         "Terraform" : "true"
     }
+}
+
+# Template para re usar creacion instancias EC2
+resource "aws_launch_template" "prod_web" {
+    name_prefix = "prod-web"
+    image_id = "ami-0ab3b071083dddbb8"
+    instance_type = "t2.micro"
+    tags = {
+        "Terraform" : "true"
+    }
+}
+
+# Autoscaling group
+resource "aws_autoscaling_group" "prod_web" {
+    availability_zones = ["us-east-1a", "us-east-1b"]
+    vpc_zone_identifier = [aws_default_subnet.default_az1, aws_default_subnet.default_az2]
+    desired_capacity = 1
+    max_size = 1
+    min_size = 1
+
+    launch_template {
+        id = aws_launch_template.prod_web.id
+        version = "$Latest"
+    }
+
+    tag {
+        key                 = "Terraform"
+        value               = "true"
+        propagate_at_launch = true
+    }
+}
+
+resource "aws_autoscaling_attachment" "prod_web" {
+    autoscaling_group_name = aws_autoscaling_group.prod_web.id
+    elb = aws_elb.prod_web.id
 }
