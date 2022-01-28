@@ -89,7 +89,7 @@ module "web_app" {
     web_desired_capacity    = var.web_desired_capacity
     web_max_size            = var.web_max_size
     web_min_size            = var.web_min_size
-    subnets = [aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id]
-    security_groups = [aws_security_group.prod_web.id]
+    subnets                 = [aws_default_subnet.default_az1.id, aws_default_subnet.default_az2.id]
+    security_groups         = [aws_security_group.prod_web.id]
     web_app = "prod"
 }
