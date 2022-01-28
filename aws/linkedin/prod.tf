@@ -88,8 +88,7 @@ resource "aws_launch_template" "prod_web" {
 }
 
 # Autoscaling group
-resource "aws_autoscaling_group" "prod_web" {
-    availability_zones = ["us-east-1a", "us-east-1b"]
+resource "aws_autoscaling_group" "prod_web" {    
     vpc_zone_identifier = [aws_default_subnet.default_az1, aws_default_subnet.default_az2]
     desired_capacity = 1
     max_size = 1
