@@ -1,4 +1,10 @@
-**/.terraform
-**/terraform.tfstate
-**/terraform.tfstate.backup
-**/.env
+*.terraform
+*.pem
+*.tfvars
+*.tfplan
+*.tfstate
+*.tfstate.backup
+*.lock.info
+.terraform
+.DS_Store
+commands.txt
